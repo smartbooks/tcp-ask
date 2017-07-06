@@ -1,5 +1,10 @@
 package com.ljja.monitor
 
+import scala.io.StdIn
+import scala.async.Async._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+
 object App {
 
   val timeout = 1000
@@ -13,20 +18,24 @@ object App {
       host = args(0).trim()
     }
 
-    for (i <- portStart to portEnd) {
+    val future = async {
 
-      val t = new Thread(new Runnable {
-        override def run() = {
-          val tcp = new TcpSocketPortMonitor(host, i, timeout).open()
-          if (tcp) {
-            println(s"${host},${i},${tcp}")
+      for (i <- portStart to portEnd) {
+        val t = new Thread(new Runnable {
+          override def run() = {
+            val tcp = new TcpSocketPortMonitor(host, i, timeout).open()
+            //println(s"${host},${i},${tcp}")
+            if (tcp) {
+              println(s"${host},${i},${tcp}")
+            }
           }
-        }
-      })
+        })
+        t.start()
+        Thread.sleep(1)
+      }
+    }
 
-      t.start()
-
-      Thread.sleep(1)
+    while (future.isCompleted == false) {
 
     }
 
